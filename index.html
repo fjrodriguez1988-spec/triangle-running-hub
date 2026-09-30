@@ -217,29 +217,6 @@
   }
   .day > .section-block:first-of-type { margin-top: 0; }
   .section-block.tight { margin-top: 10px; }
-  .section-head {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #fff;
-    font-family: "Poppins", sans-serif;
-    font-weight: 700;
-    font-size: .95rem;
-    letter-spacing: .02em;
-    padding: 9px 18px 9px 12px;
-    border-radius: 999px;
-    margin-bottom: 16px;
-  }
-  .section-head.free-head { background: var(--gold-ink); background: var(--copper); }
-  .section-head.paid-head { background: var(--ink); }
-  .section-head .dot {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: var(--ink);
-    display: inline-flex; align-items: center; justify-content: center;
-    flex: none;
-  }
-  .section-head.paid-head .dot { background: var(--copper); }
-  .section-head .dot svg { width: 13px; height: 13px; }
 
   .section-note {
     margin: -8px 0 16px;
@@ -514,38 +491,24 @@
   // Explicit calendar dates for this build's week (updated each rebuild alongside TOWNS).
   const DAY_DATES = {"Monday": "Sept 28", "Tuesday": "Sept 29", "Wednesday": "Sept 30", "Thursday": "Oct 1", "Friday": "Oct 2", "Saturday": "Oct 3", "Sunday": "Oct 4"};
   const CAL_DOT = '<span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#FAF6EF" stroke-width="2"><path d="M4 10h16M4 10a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9Z"/><path d="M8 6V4M16 6V4"/></svg></span>';
-  const FREE_DOT = '<span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#FAF6EF" stroke-width="2"><path d="M12 3v18M5 8l7-5 7 5"/></svg></span>';
-  const PAID_DOT = '<span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#FAF6EF" stroke-width="2"><path d="M6 3v18M6 4h9l-2.2 3L15 10H6"/></svg></span>';
 
   // Groups a town's free+paid events by day of week (Monday-Sunday), keeping the
   // free/paid split nested inside each day. A recurring club appears under every
   // day in its `days` array; a one-time event appears under its date's weekday.
   function buildDaySections(data) {
     const byDay = {};
-    DAY_ORDER.forEach(d => { byDay[d] = { free: [], paid: [] }; });
+    DAY_ORDER.forEach(d => { byDay[d] = []; });
 
-    data.free.forEach(ev => (ev.days || []).forEach(d => { if (byDay[d]) byDay[d].free.push(ev); }));
-    data.paid.forEach(ev => (ev.days || []).forEach(d => { if (byDay[d]) byDay[d].paid.push(ev); }));
+    data.free.forEach(ev => (ev.days || []).forEach(d => { if (byDay[d]) byDay[d].push(ev); }));
+    data.paid.forEach(ev => (ev.days || []).forEach(d => { if (byDay[d]) byDay[d].push(ev); }));
 
     return DAY_ORDER
-      .filter(d => byDay[d].free.length || byDay[d].paid.length)
+      .filter(d => byDay[d].length)
       .map(d => {
-        const freeBlock = byDay[d].free.length
-          ? `<div class="section-block tight">
-               <div class="section-head free-head">${FREE_DOT}Free run clubs</div>
-               <div class="events">${byDay[d].free.map(eventCard).join("")}</div>
-             </div>`
-          : "";
-        const paidBlock = byDay[d].paid.length
-          ? `<div class="section-block tight">
-               <div class="section-head paid-head">${PAID_DOT}Races &amp; paid events</div>
-               <div class="events">${byDay[d].paid.map(eventCard).join("")}</div>
-             </div>`
-          : "";
         return `
           <section class="day">
             <div class="day-head">${CAL_DOT}${d}, ${DAY_DATES[d]}</div>
-            ${freeBlock}${paidBlock}
+            <div class="events">${byDay[d].map(eventCard).join("")}</div>
           </section>`;
       })
       .join("");
